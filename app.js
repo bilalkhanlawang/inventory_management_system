@@ -22,6 +22,9 @@ const salePurchaseAllocationRouter = require("./routes/salePurchaseAll.Roues.js"
 const customerPaymentRouter = require("./routes/customerPaymentRoutes.js");
 const exchangeRateRouter = require("./routes/exchangeRateRoutes.js");
 
+// this is for authentication router
+const signupRouter = require("./routes/authRoutes.js");
+
 
 app.use("/api/Categories",categoryRoutes);
 app.use("/api/units" ,unitsRouter );
@@ -38,6 +41,8 @@ app.use("/api/sale_purchase_allocation",salePurchaseAllocationRouter);
 app.use("/api/customer_payment",customerPaymentRouter);
 app.use("/api/exchange_rate",exchangeRateRouter);
 
+// this is for authentication
+app.use("/api/auth",signupRouter);
 
 
 app.listen(process.env.PORT , () => {
