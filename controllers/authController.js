@@ -164,8 +164,47 @@ const login = catchAsync(async (req, res, next) => {
   });
 });
 
+// protect 
+
+const protect = catchAsync(async (req, res, next) => {
+  // 1) Get token
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
+    return next(new appError("You are not logged in. Please log in to get access.", 401));
+  }
+
+  // 2) Verify token (with friendly errors) nad verification token 
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return next(new appError("Your token has expired. Please log in again.", 401));
+    }
+    return next(new appError("Invalid token. Please log in again.", 401));
+  }
+
+  // 3) Check user exists
+  const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [decoded.id]);
+  if (rows.length === 0) {
+    return next(new appError("The user belonging to this token no longer exists.", 401));
+  }
+
+  // 4) Attach user and continue
+  req.user = rows[0];
+  next();
+});
+
 
 module.exports = {
     signup,
     login,
+    protect,
 }
