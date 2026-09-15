@@ -1,11 +1,13 @@
 const express = require ("express");
 const router = express.Router();
 const salesDetailsController = require("../controllers/salesDetailsController.js");
-router.get("/",salesDetailsController.getAllData);
-router.get("/:id" , salesDetailsController.getDataById);
-router.post("/",salesDetailsController.createData);
-router.put("/:id",salesDetailsController.updateData);
-router.delete("/:id",salesDetailsController.deleteData);
+const {protect} = require("../controllers/authController.js");
+
+router.get("/",protect,salesDetailsController.getAllData);
+router.get("/:id" ,protect, salesDetailsController.getDataById);
+router.post("/",protect,salesDetailsController.createData);
+router.put("/:id",protect,salesDetailsController.updateData);
+router.delete("/:id",protect,salesDetailsController.deleteData);
 
 
 module.exports = router;

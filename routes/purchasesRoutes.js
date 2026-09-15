@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const purchasesController = require("../controllers/purchasesController.js");
-
-router.get("/",purchasesController.getAllData);
-router.get("/:id",purchasesController.getPurchaseById);
-router.post("/",purchasesController.createData);
-router.put("/:id",purchasesController.updateData);
-router.delete("/:id",purchasesController.deleteData);
+const {protect} = require("../controllers/authController.js");
+router.get("/",protect,purchasesController.getAllData);
+router.get("/:id",protect,purchasesController.getPurchaseById);
+router.post("/",protect,purchasesController.createData);
+router.put("/:id",protect,purchasesController.updateData);
+router.delete("/:id",protect,purchasesController.deleteData);
 
 
 

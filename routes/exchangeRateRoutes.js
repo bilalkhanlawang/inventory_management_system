@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const exchangeRate = require("../controllers/exchangeRateController.js");
-
-router.get("/",exchangeRate.getALLData);
-router.get("/:id",exchangeRate.getDataById);
-router.post("/",exchangeRate.createData);
-router.put("/:id",exchangeRate.updateData);
-router.delete("/:id",exchangeRate.deleteData);
+const {protect} = require("../controllers/authController.js");
+router.get("/",protect,exchangeRate.getALLData);
+router.get("/:id",protect,exchangeRate.getDataById);
+router.post("/",protect,exchangeRate.createData);
+router.put("/:id",protect,exchangeRate.updateData);
+router.delete("/:id",protect,exchangeRate.deleteData);
 
 
 
