@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const itemController = require("../controllers/itemsController.js");
-const {protect} = require("../controllers/authController.js");
-router.get("/",protect,itemController.getAllData);
-router.get("/:id",protect,itemController.getItemByIy);
-router.post("/",protect,itemController.createData);
-router.put("/:id",protect,itemController.updateItem);
-router.delete("/:id",protect,itemController.deleteItem);
+const {protect,restrictTo} = require("../controllers/authController.js");
+router.get("/",protect,restrictTo("user",'admin'),itemController.getAllData);
+router.get("/:id",protect,restrictTo("user",'admin'),itemController.getItemByIy);
+router.post("/",protect,restrictTo("user",'admin'),itemController.createData);
+router.put("/:id",protect,restrictTo('admin'),itemController.updateItem);
+router.delete("/:id",protect,restrictTo('admin'),itemController.deleteItem);
 
 
 

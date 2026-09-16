@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const vendorsController = require("../controllers/vendorsController.js");
-const{protect} = require("../controllers/authController.js")
+const{protect,restrictTo} = require("../controllers/authController.js")
 
-router.get("/" ,protect, vendorsController.getAllData);
-router.get("/:id" ,protect, vendorsController.getVendorById);
-router.post("/" , protect,vendorsController.createData);
-router.put("/:id" ,protect, vendorsController.updateData);
-router.delete("/:id" ,protect, vendorsController.deleteData);
+router.get("/" ,protect,restrictTo("user",'admin'), vendorsController.getAllData);
+router.get("/:id" ,protect,restrictTo("user",'admin'), vendorsController.getVendorById);
+router.post("/" , protect,restrictTo("user",'admin'),vendorsController.createData);
+router.put("/:id" ,protect,restrictTo('admin'), vendorsController.updateData);
+router.delete("/:id" ,protect,restrictTo('admin'), vendorsController.deleteData);
 
 
 module.exports = router;
