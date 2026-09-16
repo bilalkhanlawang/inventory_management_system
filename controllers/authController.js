@@ -202,9 +202,20 @@ const protect = catchAsync(async (req, res, next) => {
   next();
 });
 
+// restrictTo 
+const restrictTo = (...role) => {
+  return (req,res,next) => {
+    if (!role.includes(req.user.role)) {
+      return next(new appError("you do not have permission to perform this action", 403));
+    }
+    next();
+  }
+}
+
 
 module.exports = {
     signup,
     login,
     protect,
+    restrictTo,
 }
