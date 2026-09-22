@@ -6,7 +6,7 @@ const {pool, testDB} = require ("./config/db.js")
 app.use(express.json());
 // connection function call
 testDB();
-
+const usersRoutes = require("./routes/usersRoutes.js");
 const categoryRoutes = require("./routes/categoryRoutes.js");
 const unitsRouter = require("./routes/unitRoutes.js");
 const currenciesRouter = require("./routes/currenciesRouter.js");
@@ -25,8 +25,8 @@ const exchangeRateRouter = require("./routes/exchangeRateRoutes.js");
 // this is for authentication router
 const signupRouter = require("./routes/authRoutes.js");
 
-
-app.use("/api/Categories",categoryRoutes);
+app.use("/api/users",usersRoutes);
+app.use("/api/categories",categoryRoutes);
 app.use("/api/units" ,unitsRouter );
 app.use("/api/currencies" , currenciesRouter);
 app.use("/api/customers", customersRouter);
