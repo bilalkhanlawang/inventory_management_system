@@ -33,6 +33,8 @@ const bcrypt = require("bcryptjs");
 const catchAsync = require("../errorHandeling/catchAsync.js");
 const appError = require("../errorHandeling/appError.js");
 const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/email.js");
+const crypto = require("crypto");
 
 
 const signToken = id => {
@@ -140,6 +142,13 @@ const login = catchAsync(async (req, res, next) => {
   }
 
   const user = rows[0];
+// this  related  for delete me ========================================================
+  if (!user.active) {
+  return next(
+    new appError("Your account has been deactivated. Please contact support.", 403)
+  );
+}
+// =======================================================================================
 
   // 4) Check if password is correct
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
@@ -197,6 +206,12 @@ const protect = catchAsync(async (req, res, next) => {
     return next(new appError("The user belonging to this token no longer exists.", 401));
   }
 
+  // this is code related delete me ==============================================
+  if (!rows[0].active) {
+  return next(new appError("This account has been deactivated.", 403));
+}
+// =========================================================================
+
   // 4) Attach user and continue
   req.user = rows[0];
   next();
@@ -212,10 +227,212 @@ const restrictTo = (...role) => {
   }
 }
 
+// forgot password
+const forgotPassword = catchAsync(async (req,res,next) => {
+  // get user based on posted email
+  const {email} = req.body;
+  if (!email) {
+    return next (new appError("there is no user with email address", 400));
+  }
+  const [rows] = await pool.query(`SELECT * FROM users WHERE email = ?`, [email])
+  // if (!user) {
+  //   return next(new appError("there is no user with email address", 404));
+  // }
+  if (rows.length === 0) {
+    return next (new appError("there is no user with email address", 404));
+  }
+
+  const user = rows[0];
+  // generate random reset token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // 4) Hash the token and save it in the DB with an expiry
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min from now
+
+  await pool.query(
+    "UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?",
+    [hashedToken, expiresAt, user.id]
+  );
+
+  // 5) Build the reset link and send the email
+  const resetURL = `${req.protocol}://${req.get("host")}/api/auth/resetPassword/${resetToken}`;
+
+  const message = `Forgot your password? Click this link to reset it: ${resetURL}\nIf you did not request this, please ignore this email.`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Your password reset token (valid for 10 minutes)",
+      message,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Token sent to email",
+    });
+  } catch (err) {
+    // If email fails, clear the token from the DB
+    await pool.query(
+      "UPDATE users SET password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?",
+      [user.id]
+    );
+    return next(new appError("Error sending email. Try again later.", 500));
+  }
+});
+
+// PASSWORD RESET 
+// ---- resetPassword ----
+const resetPassword = catchAsync(async (req, res, next) => {
+  // 1) Hash the URL token and find the matching user
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const [rows] = await pool.query(
+    "SELECT * FROM users WHERE password_reset_token = ? AND password_reset_expires > NOW()",
+    [hashedToken]
+  );
+
+  if (rows.length === 0) {
+    return next(new appError("Token is invalid or has expired", 400));
+  }
+
+  const user = rows[0];
+
+  // 2) Validate the new password
+  const { password, passwordConfirm } = req.body;
+  if (!password || !passwordConfirm) {
+    return next(new appError("Please provide password and passwordConfirm", 400));
+  }
+  if (password !== passwordConfirm) {
+    return next(new appError("Passwords do not match", 400));
+  }
+
+  // 3) Hash new password and save; clear the reset fields
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  await pool.query(
+    "UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?",
+    [hashedPassword, user.id]
+  );
+
+  // 4) Log the user in — send a fresh JWT
+  const token = signToken(user.id);
+
+  res.status(200).json({
+    status: "success",
+    token,
+  });
+});
+
+const updateMyPassword  = catchAsync(async(req,res,next) => {
+    // 1) Get the current user from the DB
+  const [rows] = await pool.query(`SELECT * FROM users WHERE id = ?`, [req.user.id]);
+
+  if (rows.length === 0) {
+    return next(new appError("User not found",404));
+  }
+
+  const user = rows[0];
+  // 2) Check the current password is correct
+  const {currentPassword, newPassword,newPasswordConfirm} = req.body;
+
+  if (!currentPassword || !newPassword ||!newPasswordConfirm) {
+    return next (new appError("Please provide currentPassword, newPassword, and newPasswordConfirm" , 400));
+  }
+
+  
+  // 3) Verify the current password is correct
+  const iscurrent = await bcrypt.compare(currentPassword , user.password);
+  if (!iscurrent) {
+    return next (new appError("Your current password is wrong", 401));
+  }
+
+  
+  // 4) Make sure the two new passwords match
+
+  if (newPassword != newPasswordConfirm) {
+    return next(new appError("New passwords do not match" , 400));
+  }
+    // 5) Hash the new password and save it
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+     await pool.query(
+    "UPDATE users SET password = ? WHERE id = ?",
+    [hashedPassword, user.id]
+  );
+
+  // 6) Send a fresh JWT so the user stays logged in
+  const token = signToken(user.id);
+
+  res.status(200).json({
+    status: "success",
+    message: "Password updated successfully",
+    token,
+  });
+
+});
+
+// update me part is start --------------------------------------------------
+// Helper: only allow these fields to be updated via updateMe
+const filterObj = (obj , ...allowedfields) => {
+  const newObg = {};
+  Object.keys(obj).forEach((keys) => {
+    if (allowedfields.includes(keys)) newObg[keys] = obj[keys];
+  });
+  return newObg;
+}
+
+// update me 
+const updateMe = catchAsync(async (req,res,next) => {
+  if (req.body.password || req.body.passwordConfirm) {
+    return next (new appError( "This route is not for password updates. Please use /updateMyPassword.",400));
+  }
+
+  const filteredBody = filterObj(req.body, "name","email");
+  if (Object.keys(filteredBody).length === 0) {
+    return next (new appError("Please provide name or email to update", 400));
+  }
+  await pool.query (`UPDATE users SET ? WHERE id = ?`, [filteredBody, req.user.id]);
+
+  const [rows] = await pool.query(`SELECT id ,name, email, role FROM users WHERE id = ?`,[req.user.id]);
+
+  res.status (200).json({
+    status: "successful",
+    data : {
+      user : rows[0]
+    }
+  });
+});
+
+// delete me 
+const deleteMe = catchAsync(async(req,res,next) => {
+  await pool.query(`UPDATE users SET active = 0 WHERE id = ?`,[req.user.id]);
+  res.status(204).json({
+    status: "successful",
+    data: null
+  });
+});
+
+
+
+
 
 module.exports = {
     signup,
     login,
     protect,
     restrictTo,
+    forgotPassword,
+    resetPassword ,
+    updateMyPassword,
+    updateMe,
+    deleteMe,
 }
