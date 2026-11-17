@@ -112,9 +112,35 @@ const catchAsync = require("../errorHandeling/catchAsync.js");
 const appError = require("../errorHandeling/appError.js");
 
 // for get all data 
+
+// const getALLData = catchAsync(async(req, res, next) => {
+//     const [rows] = await pool.query(
+//         `SELECT cp.customer_payment_id, c.customer_id, cu.currency_id, cp.amount, cp.payment_date, s.sale_id
+//          FROM customer_payment cp
+//          LEFT JOIN customers c ON cp.customer_id = c.customer_id
+//          LEFT JOIN currencies cu ON cp.currency_id = cu.currency_id
+//          LEFT JOIN sales s ON cp.sale_id = s.sale_id`
+//     );
+    
+//     if (rows.length === 0) {
+//         return next(new appError('customer_payment not found', 404));
+//     }
+//     res.status(200).json(rows);
+// });
+
+
 const getALLData = catchAsync(async(req, res, next) => {
     const [rows] = await pool.query(
-        `SELECT cp.customer_payment_id, c.customer_id, cu.currency_id, cp.amount, cp.payment_date, s.sale_id
+        `SELECT 
+            cp.customer_payment_id, 
+            s.sale_id,
+            s.invoice_no,
+            c.customer_id, 
+            c.customer_name,
+            cu.currency_id, 
+            cu.currency_name,
+            cp.amount, 
+            cp.payment_date
          FROM customer_payment cp
          LEFT JOIN customers c ON cp.customer_id = c.customer_id
          LEFT JOIN currencies cu ON cp.currency_id = cu.currency_id
@@ -128,10 +154,40 @@ const getALLData = catchAsync(async(req, res, next) => {
 });
 
 // for get one data
+
+// const getDataById = catchAsync(async(req, res, next) => {
+//     const { id } = req.params;
+//     const [rows] = await pool.query(
+//         `SELECT cp.customer_payment_id, c.customer_id, cu.currency_id, cp.amount, cp.payment_date, s.sale_id
+//          FROM customer_payment cp
+//          LEFT JOIN customers c ON cp.customer_id = c.customer_id
+//          LEFT JOIN currencies cu ON cp.currency_id = cu.currency_id
+//          LEFT JOIN sales s ON cp.sale_id = s.sale_id
+//          WHERE cp.customer_payment_id = ?`,
+//         [id]
+//     );
+    
+//     if (rows.length === 0) {
+//         return next(new appError("Payment not found with this id", 404));
+//     }
+//     res.status(200).json(rows);
+// });
+
+
+
 const getDataById = catchAsync(async(req, res, next) => {
     const { id } = req.params;
     const [rows] = await pool.query(
-        `SELECT cp.customer_payment_id, c.customer_id, cu.currency_id, cp.amount, cp.payment_date, s.sale_id
+        `SELECT 
+            cp.customer_payment_id, 
+            s.sale_id,
+            s.invoice_no,
+            c.customer_id, 
+            c.customer_name,
+            cu.currency_id, 
+            cu.currency_name,
+            cp.amount, 
+            cp.payment_date
          FROM customer_payment cp
          LEFT JOIN customers c ON cp.customer_id = c.customer_id
          LEFT JOIN currencies cu ON cp.currency_id = cu.currency_id
@@ -145,6 +201,8 @@ const getDataById = catchAsync(async(req, res, next) => {
     }
     res.status(200).json(rows);
 });
+
+
 
 // for create data 
 const createData = catchAsync(async(req, res, next) => {

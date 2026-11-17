@@ -147,12 +147,33 @@ const catchAsync = require("../errorHandeling/catchAsync.js");
 const appError = require("../errorHandeling/appError.js");
 
 // for get all data from sales table 
+// const getAllSales = catchAsync(async(req, res, next) => {
+//     const [rows] = await pool.query(`
+//         SELECT 
+//             s.sale_id,
+//             c.customer_id,
+//             cu.currency_id,
+//             s.sale_date,
+//             s.invoice_no
+//         FROM sales s
+//         LEFT JOIN customers c ON s.customer_id = c.customer_id
+//         LEFT JOIN currencies cu ON s.currency_id = cu.currency_id
+//     `);
+    
+//     if (rows.length === 0) {
+//         return next(new appError('sales not found', 404));
+//     }
+//     res.status(200).json(rows);
+// });
+
 const getAllSales = catchAsync(async(req, res, next) => {
     const [rows] = await pool.query(`
         SELECT 
             s.sale_id,
             c.customer_id,
+            c.customer_name,
             cu.currency_id,
+            cu.currency_name,
             s.sale_date,
             s.invoice_no
         FROM sales s
@@ -167,6 +188,28 @@ const getAllSales = catchAsync(async(req, res, next) => {
 });
 
 // for get one data 
+// const getSaleById = catchAsync(async(req, res, next) => {
+//     const { id } = req.params;
+    
+//     const [rows] = await pool.query(`
+//         SELECT 
+//             s.sale_id,
+//             c.customer_id,
+//             cu.currency_id,
+//             s.sale_date,
+//             s.invoice_no
+//         FROM sales s
+//         LEFT JOIN customers c ON s.customer_id = c.customer_id
+//         LEFT JOIN currencies cu ON s.currency_id = cu.currency_id
+//         WHERE s.sale_id = ?
+//     `, [id]);
+    
+//     if (rows.length === 0) {
+//         return next(new appError("sales not found with this id", 404));
+//     }
+//     res.status(200).json(rows);
+// });
+
 const getSaleById = catchAsync(async(req, res, next) => {
     const { id } = req.params;
     
@@ -174,7 +217,9 @@ const getSaleById = catchAsync(async(req, res, next) => {
         SELECT 
             s.sale_id,
             c.customer_id,
+            c.customer_name,
             cu.currency_id,
+            cu.currency_name,
             s.sale_date,
             s.invoice_no
         FROM sales s

@@ -103,9 +103,9 @@ const appError = require("../errorHandeling/appError.js");
 // for get all data 
 const getAllData = catchAsync(async(req, res, next) => {
     const [rows] = await pool.query(
-        `SELECT spa.allocation_id,sd.sale_detail_id,pd.purchase_detail_id,spa.allocated_quantity FROM sales_purchase_allocation spa
-        LEFT JOIN sales_details sd ON aps.sale_detail_id = sd.sale_detail_id
-        LEFT JOIN purchase_details sd ON spa.purchase_detail_id = pd.purchase_detail_id
+        `SELECT spa.allocation_id,sd.sale_detail_id ,pd.purchase_detail_id,spa.allocated_quantity FROM sales_purchase_allocation spa
+        LEFT JOIN sales_details sd ON spa.sale_detail_id = sd.sale_detail_id
+        LEFT JOIN purchase_details pd ON spa.purchase_detail_id = pd.purchase_detail_id
         `
     );
     
@@ -119,8 +119,8 @@ const getAllData = catchAsync(async(req, res, next) => {
 const getDataById = catchAsync(async(req, res, next) => {
     const { id } = req.params;
     const [rows] = await pool.query(
-        `SELECT spa.allocation_id,sd.sale_detail_id,pd.purchase_detail_id,spa.allocated_quantity FROM sales_purchase_allocation spa
-        LEFT JOIN sales_details sd ON aps.sale_detail_id = sd.sale_detail_id
+        `SELECT spa.allocation_id,sd.sale_detail_id ,pd.purchase_detail_id,spa.allocated_quantity FROM sales_purchase_allocation spa
+        LEFT JOIN sales_details sd ON spa.sale_detail_id = sd.sale_detail_id
         LEFT JOIN purchase_details sd ON spa.purchase_detail_id = pd.purchase_detail_id
         WHERE sale_detail_id = ?
         `, [id]);

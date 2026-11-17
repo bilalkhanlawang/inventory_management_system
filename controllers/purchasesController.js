@@ -111,7 +111,7 @@ const appError = require("../errorHandeling/appError.js");
 const getAllData = catchAsync(async(req, res, next) => {
     const [rows] = await pool.query(
         `
-        SELECT p.purchase_id,v.vendor_id,c.currency_id,p.purchase_date,p.invoice_no FROM purchases p
+        SELECT p.purchase_id,v.vendor_name,c.currency_name,p.purchase_date,p.invoice_no FROM purchases p
         LEFT JOIN vendors v ON p.vendor_id = v.vendor_id
         LEFT JOIN currencies c ON p.currency_id = c.currency_id`
     );

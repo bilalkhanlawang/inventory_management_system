@@ -11,3 +11,7 @@ router.delete("/:id",protect,restrictTo('admin'),salesDetailsController.deleteDa
 
 
 module.exports = router;
+
+
+
+

@@ -118,7 +118,7 @@ const appError = require("../errorHandeling/appError.js");
 // for get all data
 const getAllData = catchAsync(async(req, res, next) => {
     const [rows] = await pool.query(`
-        SELECT i.item_id,i.item_name,c.category_id,u.unit_id
+        SELECT i.item_id,i.item_name,c.category_name,u.unit_name
         FROM items i
         LEFT JOIN categories c ON i.category_id = c.category_id
         LEFT JOIN units u ON i.unit_id = u.unit_id`);
@@ -132,7 +132,7 @@ const getAllData = catchAsync(async(req, res, next) => {
 // fatch one data 
 const getItemByIy = catchAsync(async(req, res, next) => {
     const { id } = req.params;
-    const [rows] = await pool.query(`SELECT i.item_id,i.item_name,c.category_id,u.unit_id
+    const [rows] = await pool.query(`SELECT i.item_id,i.item_name,c.category_name,u.unit_name
         FROM items i 
         LEFT JOIN categories c ON i.category_id = c.category_id
         LEFT JOIN units u ON i.unit_id = u.unit_id WHERE i.item_id = ?`, [id]);
@@ -143,43 +143,147 @@ const getItemByIy = catchAsync(async(req, res, next) => {
     res.status(200).json(rows);
 });
 
+// // for create data items
+// const createData = catchAsync(async(req, res, next) => {
+//     const { item_name, category_name, unit_name } = req.body;
+
+//     if (!item_name) {
+//         return next(new appError("item name is required", 400));
+//     }
+//     const [result] = await pool.query(
+//         `INSERT INTO items(item_name,category_name,unit_name)VALUES(?,?,?)`,
+//         [item_name, category_name || null, unit_name || null]
+//     );
+//     res.status(201).json({
+//         status: "cuccssful",
+//         message: "item created successful",
+//         data: {
+//             id: result.insertId,
+//             item_name: item_name,
+//             category_name: category_name,
+//             unit_name: unit_name
+//         }
+//     });
+// });
+
+
 // for create data items
-const createData = catchAsync(async(req, res, next) => {
-    const { item_name, category_id, unit_id } = req.body;
+const createData = catchAsync(async (req, res, next) => {
+    const { item_name, category_name, unit_name } = req.body;
 
     if (!item_name) {
         return next(new appError("item name is required", 400));
     }
+
+    // 🔹 تبدیل category_name → category_id
+    let category_id = null;
+    if (category_name) {
+        const [catRows] = await pool.query(
+            "SELECT category_id FROM categories WHERE category_name = ?",
+            [category_name]
+        );
+        if (catRows.length > 0) {
+            category_id = catRows[0].category_id;
+        } else {
+            const [newCat] = await pool.query(
+                "INSERT INTO categories (category_name) VALUES (?)",
+                [category_name]
+            );
+            category_id = newCat.insertId;
+        }
+    }
+
+    // 🔹 تبدیل unit_name → unit_id
+    let unit_id = null;
+    if (unit_name) {
+        const [unitRows] = await pool.query(
+            "SELECT unit_id FROM units WHERE unit_name = ?",
+            [unit_name]
+        );
+        if (unitRows.length > 0) {
+            unit_id = unitRows[0].unit_id;
+        } else {
+            const [newUnit] = await pool.query(
+                "INSERT INTO units (unit_name) VALUES (?)",
+                [unit_name]
+            );
+            unit_id = newUnit.insertId;
+        }
+    }
+
+    // 🔹 درج در جدول items
     const [result] = await pool.query(
-        `INSERT INTO items(item_name,category_id,unit_id)VALUES(?,?,?)`,
-        [item_name, category_id || null, unit_id || null]
+        "INSERT INTO items (item_name, category_id, unit_id) VALUES (?, ?, ?)",
+        [item_name, category_id, unit_id]
     );
+
     res.status(201).json({
-        status: "cuccssful",
+        status: "successful",
         message: "item created successful",
         data: {
             id: result.insertId,
-            item_name: item_name,
-            category_id: category_id,
-            unit_id: unit_id
-        }
+            item_name,
+            category_name,
+            unit_name,
+        },
     });
 });
 
-// for updata items
-const updateItem = catchAsync(async(req, res, next) => {
+// for update items
+const updateItem = catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    const { item_name, category_id, unit_id } = req.body;
+    const { item_name, category_name, unit_name } = req.body;
+
+    // 🔹 تبدیل category_name به category_id
+    let category_id = null;
+    if (category_name) {
+        const [catRows] = await pool.query(
+            "SELECT category_id FROM categories WHERE category_name = ?",
+            [category_name]
+        );
+        if (catRows.length > 0) {
+            category_id = catRows[0].category_id;
+        } else {
+            const [newCat] = await pool.query(
+                "INSERT INTO categories (category_name) VALUES (?)",
+                [category_name]
+            );
+            category_id = newCat.insertId;
+        }
+    }
+
+    // 🔹 تبدیل unit_name به unit_id
+    let unit_id = null;
+    if (unit_name) {
+        const [unitRows] = await pool.query(
+            "SELECT unit_id FROM units WHERE unit_name = ?",
+            [unit_name]
+        );
+        if (unitRows.length > 0) {
+            unit_id = unitRows[0].unit_id;
+        } else {
+            const [newUnit] = await pool.query(
+                "INSERT INTO units (unit_name) VALUES (?)",
+                [unit_name]
+            );
+            unit_id = newUnit.insertId;
+        }
+    }
+
+    // 🔹 به‌روزرسانی (بیرون از if/else)
     const [result] = await pool.query(
-        `UPDATE items SET item_name = ?, category_id = ?, unit_id = ? WHERE item_id = ?`,
+        "UPDATE items SET item_name = ?, category_id = ?, unit_id = ? WHERE item_id = ?",
         [item_name, category_id, unit_id, id]
     );
-    
+
     if (!result.affectedRows) {
         return next(new appError("item not found", 404));
     }
     res.status(200).json({ status: "successful", message: "item is updated" });
 });
+
+
+
 
 // for delete item
 const deleteItem = catchAsync(async(req, res, next) => {

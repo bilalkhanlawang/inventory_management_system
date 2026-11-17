@@ -1,8 +1,16 @@
 require ("dotenv").config();
 const  express = require ("express")
+const cors = require("cors"); 
 const app = express();
 // this is for connection of database 
 const {pool, testDB} = require ("./config/db.js")
+
+
+// thisconnection backend to frontend
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
 app.use(express.json());
 // connection function call
 testDB();
@@ -25,6 +33,11 @@ const exchangeRateRouter = require("./routes/exchangeRateRoutes.js");
 // this is for authentication router
 const signupRouter = require("./routes/authRoutes.js");
 
+const dashboardRouter = require("./routes/dashboardRoutes.js");
+
+const reportRouter = require("./routes/reportRoutes.js");
+
+
 app.use("/api/users",usersRoutes);
 app.use("/api/categories",categoryRoutes);
 app.use("/api/units" ,unitsRouter );
@@ -40,6 +53,10 @@ app.use("/api/purchase_payment",purchasePaymentRouter);
 app.use("/api/sale_purchase_allocation",salePurchaseAllocationRouter);
 app.use("/api/customer_payment",customerPaymentRouter);
 app.use("/api/exchange_rate",exchangeRateRouter);
+
+app.use("/api/dashboard", dashboardRouter);
+
+app.use("/api/reports", reportRouter);
 
 // this is for authentication
 app.use("/api/auth",signupRouter);

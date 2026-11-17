@@ -1,33 +1,3 @@
-
-// const { pool } = require("../config/db.js");  // or const pool = require("../config/db.js");
-// const catchAsync = require("../errorHandeling/catchAsync.js");
-// const appError = require("../errorHandeling/appError.js");
-
-// const signup = catchAsync(async (req,res,next) => {
-//     const {name, email,password,passwordConfirm, role,created_at} = req.body;
-//     const [result] = await pool.query(`INSERT INTO users(name, email,password,passwordConfirm, role,created_at)
-//         VALUES(?,?,?,?,?,?)`,[name, email,password,passwordConfirm, role,created_at]
-//         );
-//         res.status(201).json({
-//             status: "successful",
-//             message: "user created",
-//             data:{
-//                 id:result.insertId,
-//                 name:name,
-//                  email:email,
-//                  password:password,
-//                  passwordConfirm:passwordConfirm, 
-//                  role:role,
-//                  created_at:created_at
-//             }
-
-//         });
-// });
-
-
-
-
-
 const {pool} = require("../config/db.js");
 const bcrypt = require("bcryptjs");
 const catchAsync = require("../errorHandeling/catchAsync.js");

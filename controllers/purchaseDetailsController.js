@@ -108,13 +108,35 @@ const catchAsync = require("../errorHandeling/catchAsync.js");
 const appError = require("../errorHandeling/appError.js");
 
 // for get all data from purchase details
+// const getALLData = catchAsync(async(req, res, next) => {
+//     const [rows] = await pool.query(
+//         `SELECT pd.purchase_detail_id,p.purchase_id, i.item_id,pd.quantity,pd.unit_price
+//         FROM purchase_details pd
+//         LEFT JOIN purchases p ON pd.purchase_id = p.purchase_id
+//         LEFT JOIN items i ON pd.item_id = i.item_id
+//         `);
+    
+//     if (rows.length === 0) {
+//         return next(new appError('purchase_details not found', 404));
+//     }
+//     res.status(200).json(rows);
+// });
+
+
 const getALLData = catchAsync(async(req, res, next) => {
     const [rows] = await pool.query(
-        `SELECT pd.purchase_detail_id,p.purchase_id, i.item_id,pd.quantity,pd.unit_price
+        `SELECT 
+            pd.purchase_detail_id,
+            p.purchase_id,
+            p.invoice_no,
+            i.item_id,
+            i.item_name,
+            pd.quantity,
+            pd.unit_price
         FROM purchase_details pd
         LEFT JOIN purchases p ON pd.purchase_id = p.purchase_id
-        LEFT JOIN items i ON pd.item_id = i.item_id
-        `);
+        LEFT JOIN items i ON pd.item_id = i.item_id`
+    );
     
     if (rows.length === 0) {
         return next(new appError('purchase_details not found', 404));
@@ -123,14 +145,39 @@ const getALLData = catchAsync(async(req, res, next) => {
 });
 
 // for get single data from purchase details
+// const getDataById = catchAsync(async(req, res, next) => {
+//     const { id } = req.params;
+//     const [rows] = await pool.query(
+//         `SELECT pd.purchase_detail_id,p.purchase_id, i.item_id,pd.quantity,pd.unit_price
+//         FROM purchase_details pd
+//         LEFT JOIN purchases p ON pd.purchase_id = p.purchase_id
+//         LEFT JOIN items i ON pd.item_id = i.item_id WHERE purchase_detail_id = ?
+//         `, [id]);
+    
+//     if (rows.length === 0) {
+//         return next(new appError("purchase_details not found with this id", 404));
+//     }
+//     res.status(200).json(rows);
+// });
+
+
 const getDataById = catchAsync(async(req, res, next) => {
     const { id } = req.params;
     const [rows] = await pool.query(
-        `SELECT pd.purchase_detail_id,p.purchase_id, i.item_id,pd.quantity,pd.unit_price
+        `SELECT 
+            pd.purchase_detail_id,
+            p.purchase_id,
+            p.invoice_no,
+            i.item_id,
+            i.item_name,
+            pd.quantity,
+            pd.unit_price
         FROM purchase_details pd
         LEFT JOIN purchases p ON pd.purchase_id = p.purchase_id
-        LEFT JOIN items i ON pd.item_id = i.item_id WHERE purchase_detail_id = ?
-        `, [id]);
+        LEFT JOIN items i ON pd.item_id = i.item_id 
+        WHERE purchase_detail_id = ?`,
+        [id]
+    );
     
     if (rows.length === 0) {
         return next(new appError("purchase_details not found with this id", 404));

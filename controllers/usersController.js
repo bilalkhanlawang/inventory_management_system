@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 
 // get all data from users table 
 const getAllData = catchAsync(async (req,res,next) => {
-    const [rows] = await pool.query(`SELECT * FROM users`);
+    const [rows] = await pool.query(` SELECT id, name, email, role, active, created_at FROM users`);
     if (rows.length === 0) {
         return next (new appError("users not found",404));
     }
@@ -18,7 +18,7 @@ const getAllData = catchAsync(async (req,res,next) => {
 const getDataById = catchAsync(async (req, res, next) => {
     const {id} = req.params;
   const [rows] = await pool.query(
-    "SELECT * FROM users WHERE id = ?",[id] );
+    "SELECT id, name, email, role, active, created_at FROM users WHERE id = ?",[id] );
 
   if (rows.length === 0) {
     return next(new appError("user not found", 404));
@@ -79,7 +79,7 @@ if (existingUser.length > 0) {
 }
 // check roles
 const selectedRole = role || "user";
-if (!['admin', 'userd'].includes(selectedRole)) {
+if (!['admin', 'user'].includes(selectedRole)) {
   return next (new appError('invalid role' , 400));
 }
 
